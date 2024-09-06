@@ -14,7 +14,7 @@ concurrency:
 jobs:
   docker-build-and-test:
     name: Build and Test - ${{ matrix.dockerfile }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -39,24 +39,17 @@ jobs:
         run: rm -rf /opt/hostedtoolcache
 
       - name: Build Docker image
-        run: docker build -t micm -f docker/${{ matrix.dockerfile }} .
+        run: podman build -t micm -f docker/${{ matrix.dockerfile }} . --format=docker
 
       - name: Run tests in container
         # only run this if we are not running coverage tests or have built the cuda files
-        if: matrix.dockerfile != 'Dockerfile.coverage' && matrix.dockerfile != 'Dockerfile.nvhpc'
-        run: docker run --name test-container -t micm bash -c 'make test ARGS="--rerun-failed --output-on-failure -j8"'
+        if: matrix.dockerfile != 'Dockerfile.coverage'
+        run: podman run --name test-container -t micm bash -c 'make test ARGS="--rerun-failed --output-on-failure -j8"'
 
       - name: Run coverage tests in container
         if: matrix.dockerfile == 'Dockerfile.coverage'
-        run: docker run --name test-container -t micm bash -c 'make coverage ARGS="--rerun-failed --output-on-failure -j8"'
+        run: podman run --name test-container -t micm bash -c 'make coverage ARGS="--rerun-failed --output-on-failure -j8"'
 
       - name: Copy coverage from container
         if: matrix.dockerfile == 'Dockerfile.coverage'
-        run: docker cp test-container:build/coverage.info .
-
-      - name: Upload coverage report
-        if: matrix.dockerfile == 'Dockerfile.coverage'
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.info
+        run: podman cp test-container:build/coverage.info .
