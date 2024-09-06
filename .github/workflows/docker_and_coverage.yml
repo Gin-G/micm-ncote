@@ -44,11 +44,11 @@ jobs:
       - name: Run tests in container
         # only run this if we are not running coverage tests or have built the cuda files
         if: matrix.dockerfile != 'Dockerfile.coverage'
-        run: podman run --name test-container -t micm bash -c 'make test ARGS="--rerun-failed --output-on-failure -j8"'
+        run: podman run --name ${{ matrix.dockerfile }} -t micm bash -c 'make test ARGS="--rerun-failed --output-on-failure -j8"'
 
       - name: Run coverage tests in container
         if: matrix.dockerfile == 'Dockerfile.coverage'
-        run: podman run --name test-container -t micm bash -c 'make coverage ARGS="--rerun-failed --output-on-failure -j8"'
+        run: podman run --name ${{ matrix.dockerfile }} -t micm bash -c 'make coverage ARGS="--rerun-failed --output-on-failure -j8"'
 
       - name: Copy coverage from container
         if: matrix.dockerfile == 'Dockerfile.coverage'
