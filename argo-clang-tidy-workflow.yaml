@@ -81,12 +81,24 @@ spec:
           - --dockerfile=docker/Dockerfile.clang-tidy
           - --destination=docker.io/ncging/micm-clang-tidy:{{inputs.parameters.DATE_TAG}}
           - --cache=true
-        volumeMounts:
-          - name: docker-config
-            mountPath: /kaniko/.docker/
         env:
-          - name: HOME
-            value: /root
+        - name: DOCKER_CONFIG
+          value: /kaniko/.docker
+        volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+        - name: kubeconfig
+          mountPath: /root/.kube
+          readOnly: true
+      volumes:
+      - name: docker-config
+        emptyDir: {}
+      - name: kubeconfig
+        secret:
+          secretName: kubeconfig-secret
+          items:
+          - key: config
+            path: config
 
     - name: scan-includes
       inputs:
