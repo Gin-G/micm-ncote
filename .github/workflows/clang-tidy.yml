@@ -45,6 +45,7 @@ jobs:
         run: |
           workflow_name=$(argo submit -n argo argo-clang-tidy-workflow.yaml \
             -p DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}" \
+            -p DOCKERHUB_TOKEN="${DOCKERHUB_TOKEN}" \
             -p DATE_TAG="${DATE_TAG}" \
             --output name)
           echo "WORKFLOW_NAME=$workflow_name" >> $GITHUB_ENV

@@ -43,6 +43,7 @@ spec:
           value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
         - name: DATE_TAG
           value: "{{workflow.parameters.DATE_TAG}}"
+
     - name: kaniko-build
       inputs:
         parameters:
@@ -54,7 +55,7 @@ spec:
         args:
           - --context=git://github.com/Gin-G/micm-ncote.git
           - --dockerfile=docker/Dockerfile.clang-tidy
-          - --destination={{inputs.parameters.DOCKERHUB_USERNAME}}/micm-clang-tidy:{{inputs.parameters.DATE_TAG}}
+          - --destination=docker.io/ncging/micm-clang-tidy:{{inputs.parameters.DATE_TAG}}
           - --cache=true
         volumeMounts:
           - name: docker-config
