@@ -13,6 +13,13 @@ spec:
           - key: .dockerconfigjson
             path: config.json
 
+  # Define arguments to accept GitHub secrets
+  arguments:
+    parameters:
+    - name: DOCKERHUB_USERNAME
+    - name: DOCKERHUB_TOKEN
+    - name: DATE_TAG
+
   templates:
     - name: clang-tidy-workflow
       dag:
@@ -28,8 +35,20 @@ spec:
           - name: scan-test-files
             template: scan-test-files
             dependencies: [build-image]
-
+      arguments:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+          value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+        - name: DOCKERHUB_TOKEN
+          value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+        - name: DATE_TAG
+          value: "{{workflow.parameters.DATE_TAG}}"
     - name: kaniko-build
+      inputs:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+        - name: DOCKERHUB_TOKEN
+        - name: DATE_TAG
       container:
         image: gcr.io/kaniko-project/executor:latest
         args:
@@ -45,6 +64,11 @@ spec:
             value: /root
 
     - name: scan-includes
+      inputs:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+        - name: DOCKERHUB_TOKEN
+        - name: DATE_TAG
       container:
         image: "{{inputs.parameters.DOCKERHUB_USERNAME}}/micm-clang-tidy:{{inputs.parameters.DATE_TAG}}"
         command: [bash, -c]
@@ -68,6 +92,11 @@ spec:
             cpu: "4"
 
     - name: scan-cuda-source
+      inputs:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+        - name: DOCKERHUB_TOKEN
+        - name: DATE_TAG
       container:
         image: "{{inputs.parameters.DOCKERHUB_USERNAME}}/micm-clang-tidy:{{inputs.parameters.DATE_TAG}}"
         command: [bash, -c]
@@ -93,6 +122,11 @@ spec:
             cpu: "4"
 
     - name: scan-test-files
+      inputs:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+        - name: DOCKERHUB_TOKEN
+        - name: DATE_TAG
       container:
         image: "{{inputs.parameters.DOCKERHUB_USERNAME}}/micm-clang-tidy:{{inputs.parameters.DATE_TAG}}"
         command: [bash, -c]
@@ -116,14 +150,3 @@ spec:
           limits:
             memory: "8Gi"
             cpu: "4"
-
-  arguments:
-    parameters:
-      - name: REPO_URL
-        value: "https://github.com/your-org/your-repo.git"  # Replace with your repo URL
-      - name: REPO_COMMIT
-        value: "main"  # Or specific commit/branch
-      - name: DOCKERHUB_USERNAME
-        value: ""  # Will be passed from GitHub Actions
-      - name: DATE_TAG
-        value: ""  # Will be passed from GitHub Actions
