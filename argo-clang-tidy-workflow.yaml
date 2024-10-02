@@ -35,14 +35,6 @@ spec:
           - name: scan-test-files
             template: scan-test-files
             dependencies: [build-image]
-        arguments:
-          parameters:
-          - name: DOCKERHUB_USERNAME
-            value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
-          - name: DOCKERHUB_TOKEN
-            value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
-          - name: DATE_TAG
-            value: "{{workflow.parameters.DATE_TAG}}"
 
     - name: kaniko-build
       inputs:
