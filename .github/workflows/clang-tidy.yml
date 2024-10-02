@@ -9,7 +9,7 @@ concurrency:
 jobs:
   tidy:
     name: Run Clang-Tidy
-    runs-on: ubuntu-latest
+    runs-on: gh-arc-runners-micm-runner
 
     steps:
       - name: Check out code, generate compile commands
@@ -17,30 +17,53 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build clang-tidy and micm docker image
-        run: docker build -t micm-clang-tidy -f docker/Dockerfile.clang-tidy .
-
-      - name: Scan includes
+          
+      - name: Get the current date for an image tag
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
+      - name: Apt Install
         run: |
-          INCLUDE_FILES=$(find include -type f \( -name '*.hpp' -o -name '*.h' -o -name '*.cuh' -o -name '*.inl' \) | grep -v jit | grep -v '.inl' | grep -v '.cuh' )
-          echo "scanning include files:"
-          echo ${INCLUDE_FILES} | tr " " "\n"
-          docker run --name include-scans -e INCLUDE_FILES="${INCLUDE_FILES}" -t micm-clang-tidy bash -c 'time clang-tidy -p ./build/ --config-file="./.clang-tidy" -header-filter=$(pwd)/include/.* --extra-arg "-lcudart_static" --extra-arg "-std=c++20" ${INCLUDE_FILES} -- -Iinclude/ -isystem ./cuda-build/_deps/json-src/include'
-        continue-on-error: true
+          sudo apt update && \
+          sudo apt install -y curl jq
 
-      - name: Scan CUDA source
+      - name: Install Argo CLI
         run: |
-          SOURCE_FILES=$(find src -type f \( -name '*.cu' -o -name '*.hpp' -o -name '*.h' -o -name '*.cpp' \))
-          echo "scanning src files:"
-          echo ${SOURCE_FILES} | tr " " "\n"
-          docker run --name source-scans -e SOURCE_FILES="${SOURCE_FILES}" -t micm-clang-tidy bash -c 'time clang-tidy -p ./cuda-build/ --config-file="./.clang-tidy" -header-filter=$(pwd)/include/.* --extra-arg "-lcudart_static" --extra-arg "-std=c++20" --extra-arg "--cuda-gpu-arch=sm_70" ${SOURCE_FILES} -- -Iinclude/ -isystem ./cuda-build/_deps/googletest-src/googletest/include -isystem ./cuda-build/_deps/json-src/include'
-        continue-on-error: true
+          # Add commands to install Argo CLI here
+          curl -sLO https://github.com/argoproj/argo-workflows/releases/download/v3.5.11/argo-linux-amd64.gz
+          # Unzip
+          gunzip argo-linux-amd64.gz
+          # Make binary executable
+          chmod +x argo-linux-amd64
+          # Move binary to path
+          sudo mv ./argo-linux-amd64 /usr/local/bin/argo
 
-      - name: Scan Test files
+      - name: Submit Argo Workflow and stream logs
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DATE_TAG: ${{ steps.date.outputs.date }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          REPO_COMMIT: ${{ github.sha }}
         run: |
-          TEST_FILES=$(find test -type f \( -name '*.hpp' -o -name '*.h' -o -name '*.cpp' -o -name '*.cuh' -o -name '*.cu' \) ! -path 'test/tutorial/*'  ! -path '**/*.cuh' ! -path '**/*jit*' )
-          echo "scanning test files:"
-          echo ${TEST_FILES} | tr " " "\n"
-          docker run --name test-scans -e TEST_FILES="${TEST_FILES}" -t micm-clang-tidy bash -c 'time clang-tidy -p ./cuda-build/ --config-file="./.clang-tidy" -header-filter=$(pwd)/include/.* --extra-arg "-lcudart_static" --extra-arg "-std=c++20" --extra-arg "--cuda-gpu-arch=sm_70" ${TEST_FILES} -- -Iinclude/ -isystem ./cuda-build/_deps/googletest-src/googletest/include -isystem ./cuda-build/_deps/json-src/include'
-        continue-on-error: true
+          workflow_name=$(argo submit -n argo clang-tidy-workflow.yaml \
+            -p DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}" \
+            -p DATE_TAG="${DATE_TAG}" \
+            -p REPO_URL="${REPO_URL}" \
+            -p REPO_COMMIT="${REPO_COMMIT}" \
+            --output name)
+          echo "WORKFLOW_NAME=$workflow_name" >> $GITHUB_ENV
+          
+          # Stream logs in real-time
+          argo logs -n argo $workflow_name -f &
+          log_pid=$!
+          
+          # Wait for workflow to complete
+          while true; do
+            status=$(argo get -n argo $workflow_name -o json | jq -r '.status.phase')
+            if [[ "$status" == "Succeeded" || "$status" == "Failed" || "$status" == "Error" ]]; then
+              break
+            fi
+            sleep 10
+          done
+          
+          echo "WORKFLOW_STATUS=$status" >> $GITHUB_ENV
