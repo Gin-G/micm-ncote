@@ -33,7 +33,7 @@ spec:
       container:
         image: gcr.io/kaniko-project/executor:latest
         args:
-          - --context=git://{{inputs.parameters.REPO_URL}}#{{inputs.parameters.REPO_COMMIT}}
+          - --context=git://github.com/Gin-G/micm-ncote.git
           - --dockerfile=docker/Dockerfile.clang-tidy
           - --destination={{inputs.parameters.DOCKERHUB_USERNAME}}/micm-clang-tidy:{{inputs.parameters.DATE_TAG}}
           - --cache=true
