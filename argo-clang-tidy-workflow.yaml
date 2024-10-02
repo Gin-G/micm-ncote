@@ -17,11 +17,8 @@ spec:
   arguments:
     parameters:
     - name: DOCKERHUB_USERNAME
-      value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
     - name: DOCKERHUB_TOKEN
-      value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
     - name: DATE_TAG
-      value: "{{workflow.parameters.DATE_TAG}}"
 
   templates:
     - name: clang-tidy-workflow
@@ -29,15 +26,47 @@ spec:
         tasks:
           - name: build-image
             template: kaniko-build
+            arguments:
+              parameters:
+              - name: DOCKERHUB_USERNAME
+                value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+              - name: DOCKERHUB_TOKEN
+                value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+              - name: DATE_TAG
+                value: "{{workflow.parameters.DATE_TAG}}"
           - name: scan-includes
             template: scan-includes
             dependencies: [build-image]
+            arguments:
+              parameters:
+              - name: DOCKERHUB_USERNAME
+                value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+              - name: DOCKERHUB_TOKEN
+                value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+              - name: DATE_TAG
+                value: "{{workflow.parameters.DATE_TAG}}"
           - name: scan-cuda-source
             template: scan-cuda-source
             dependencies: [build-image]
+            arguments:
+              parameters:
+              - name: DOCKERHUB_USERNAME
+                value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+              - name: DOCKERHUB_TOKEN
+                value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+              - name: DATE_TAG
+                value: "{{workflow.parameters.DATE_TAG}}"
           - name: scan-test-files
             template: scan-test-files
             dependencies: [build-image]
+            arguments:
+              parameters:
+              - name: DOCKERHUB_USERNAME
+                value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+              - name: DOCKERHUB_TOKEN
+                value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+              - name: DATE_TAG
+                value: "{{workflow.parameters.DATE_TAG}}"
 
     - name: kaniko-build
       inputs:
