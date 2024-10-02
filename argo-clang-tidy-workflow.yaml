@@ -37,6 +37,14 @@ spec:
             dependencies: [build-image]
 
     - name: kaniko-build
+      arguments:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+          value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+        - name: DOCKERHUB_TOKEN
+          value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+        - name: DATE_TAG
+          value: "{{workflow.parameters.DATE_TAG}}"
       inputs:
         parameters:
         - name: DOCKERHUB_USERNAME
@@ -57,6 +65,14 @@ spec:
             value: /root
 
     - name: scan-includes
+      arguments:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+          value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+        - name: DOCKERHUB_TOKEN
+          value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+        - name: DATE_TAG
+          value: "{{workflow.parameters.DATE_TAG}}"
       inputs:
         parameters:
         - name: DOCKERHUB_USERNAME
@@ -85,6 +101,14 @@ spec:
             cpu: "4"
 
     - name: scan-cuda-source
+      arguments:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+          value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+        - name: DOCKERHUB_TOKEN
+          value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+        - name: DATE_TAG
+          value: "{{workflow.parameters.DATE_TAG}}"
       inputs:
         parameters:
         - name: DOCKERHUB_USERNAME
@@ -115,6 +139,14 @@ spec:
             cpu: "4"
 
     - name: scan-test-files
+      arguments:
+        parameters:
+        - name: DOCKERHUB_USERNAME
+          value: "{{workflow.parameters.DOCKERHUB_USERNAME}}"
+        - name: DOCKERHUB_TOKEN
+          value: "{{workflow.parameters.DOCKERHUB_TOKEN}}"
+        - name: DATE_TAG
+          value: "{{workflow.parameters.DATE_TAG}}"
       inputs:
         parameters:
         - name: DOCKERHUB_USERNAME
