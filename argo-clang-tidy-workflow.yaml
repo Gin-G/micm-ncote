@@ -145,13 +145,6 @@ spec:
               --extra-arg "-std=c++20" \
               ${INCLUDE_FILES} -- -Iinclude/ \
               -isystem ./cuda-build/_deps/json-src/include
-        resources:
-          requests:
-            memory: "4Gi"
-            cpu: "2"
-          limits:
-            memory: "8Gi"
-            cpu: "4"
 
     - name: scan-cuda-source
       inputs:
@@ -175,13 +168,6 @@ spec:
               ${SOURCE_FILES} -- -Iinclude/ \
               -isystem ./cuda-build/_deps/googletest-src/googletest/include \
               -isystem ./cuda-build/_deps/json-src/include
-        resources:
-          requests:
-            memory: "4Gi"
-            cpu: "2"
-          limits:
-            memory: "8Gi"
-            cpu: "4"
 
     - name: scan-test-files
       inputs:
@@ -205,11 +191,4 @@ spec:
               ${TEST_FILES} -- -Iinclude/ \
               -isystem ./cuda-build/_deps/googletest-src/googletest/include \
               -isystem ./cuda-build/_deps/json-src/include
-        resources:
-          requests:
-            memory: "4Gi"
-            cpu: "2"
-          limits:
-            memory: "8Gi"
-            cpu: "4"
 
